@@ -1,20 +1,35 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, SafeAreaView } from 'react-native';
+import LoginScreen from './src/screens/Auth/LoginScreen';
+import SignupScreen from './src/screens/Auth/SignupScreen';
+import { COLORS } from './src/theme/colors';
 
 export default function App() {
+  const [currentScreen, setCurrentScreen] = useState('Login');
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="light" />
+      
+      {currentScreen === 'Login' ? (
+        <LoginScreen 
+          onNavigateToSignup={() => setCurrentScreen('Signup')} 
+          onLoginSuccess={() => alert('Proceed to Main App!')}
+        />
+      ) : (
+        <SignupScreen 
+          onNavigateToLogin={() => setCurrentScreen('Login')} 
+          onSignupSuccess={() => alert('Account created! Proceed to Main App!')}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: COLORS.background,
   },
 });
