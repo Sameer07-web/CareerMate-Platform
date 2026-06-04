@@ -1,170 +1,147 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
-import Input from '../../components/Input';
-import PrimaryButton from '../../components/PrimaryButton';
-import { COLORS } from '../../theme/colors';
-import { SPACING } from '../../theme/spacing';
-import { TYPOGRAPHY } from '../../theme/typography';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import { useDispatch, useSelector } from 'react-redux';
+import { registerUser, clearError } from '../../store/authSlice';
+import { COLORS, TYPOGRAPHY, SPACING } from '../../theme';
+import AppInput from '../../components/common/AppInput';
+import PrimaryButton from '../../components/common/PrimaryButton';
 
-const SignupScreen = ({ onNavigateToLogin, onSignupSuccess }) => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+const signupSchema = yup.object({
+  name: yup.string().required('Name is required'),
+  email: yup.string().email('Please enter a valid email').required('Email is required'),
+  password: yup.string().min(6, 'Password must be at least 6 characters').required('Password is required'),
+  confirmPassword: yup.string()
+    .oneOf([yup.ref('password'), null], 'Passwords must match')
+    .required('Confirm password is required'),
+}).required();
 
-  const validate = () => {
-    let isValid = true;
-    let newErrors = {};
+export default function SignupScreen({ navigation }) {
+  const dispatch = useDispatch();
+  const { status, error } = useSelector((state) => state.auth);
 
-    if (!name) {
-      newErrors.name = 'Full name is required';
-      isValid = false;
+  const { control, handleSubmit } = useForm({
+    resolver: yupResolver(signupSchema),
+    defaultValues: { name: '', email: '', password: '', confirmPassword: '' }
+  });
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Registration Failed', error);
+      dispatch(clearError());
     }
+  }, [error, dispatch]);
 
-    if (!email) {
-      newErrors.email = 'Email is required';
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
-      isValid = false;
-    }
-
-    if (!password) {
-      newErrors.password = 'Password is required';
-      isValid = false;
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleSignup = () => {
-    if (validate()) {
-      setIsLoading(true);
-      // Mock API call
-      setTimeout(() => {
-        setIsLoading(false);
-        if (onSignupSuccess) {
-          onSignupSuccess();
-        } else {
-          alert('Mock Signup Successful!');
-        }
-      }, 1500);
-    }
+  const onSubmit = (data) => {
+    // Drop confirmPassword before sending to API
+    const { confirmPassword, ...registerData } = data;
+    dispatch(registerUser(registerData));
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView 
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <View style={styles.headerContainer}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Start building your Placement Readiness Score today.</Text>
-          </View>
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Start accelerating your career today</Text>
+        </View>
 
-          <View style={styles.formContainer}>
-            <Input
-              label="Full Name"
-              placeholder="Enter your full name"
-              autoCapitalize="words"
-              value={name}
-              onChangeText={setName}
-              error={errors.name}
-            />
+        <View style={styles.form}>
+          <AppInput
+            control={control}
+            name="name"
+            label="Full Name"
+            placeholder="Enter your full name"
+          />
+          <AppInput
+            control={control}
+            name="email"
+            label="Email"
+            placeholder="Enter your email"
+            keyboardType="email-address"
+          />
+          <AppInput
+            control={control}
+            name="password"
+            label="Password"
+            placeholder="Create a password (min 6 chars)"
+            secureTextEntry
+          />
+          <AppInput
+            control={control}
+            name="confirmPassword"
+            label="Confirm Password"
+            placeholder="Confirm your password"
+            secureTextEntry
+          />
 
-            <Input
-              label="Email Address"
-              placeholder="Enter your email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-              error={errors.email}
-            />
-            
-            <Input
-              label="Password"
-              placeholder="Create a password"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-              error={errors.password}
-            />
+          <PrimaryButton 
+            title="Sign Up" 
+            onPress={handleSubmit(onSubmit)} 
+            loading={status === 'loading'}
+            style={styles.signupButton}
+          />
+        </View>
 
-            <PrimaryButton 
-              title="Create Account" 
-              onPress={handleSignup}
-              isLoading={isLoading}
-              style={styles.signupButton}
-            />
-          </View>
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
-            <TouchableOpacity onPress={onNavigateToLogin}>
-              <Text style={styles.loginText}>Sign In</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.linkText}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  container: {
-    flex: 1,
-  },
   scrollContent: {
     flexGrow: 1,
-    padding: SPACING.lg,
+    padding: SPACING.xl,
     justifyContent: 'center',
   },
-  headerContainer: {
-    marginBottom: SPACING.xl,
-    marginTop: SPACING.xl,
+  header: {
+    marginBottom: SPACING.xxxl,
+    marginTop: SPACING.xxxl,
   },
   title: {
-    ...TYPOGRAPHY.h1,
+    fontSize: TYPOGRAPHY.sizes.display,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.textPrimary,
     marginBottom: SPACING.xs,
   },
   subtitle: {
-    ...TYPOGRAPHY.body,
+    fontSize: TYPOGRAPHY.sizes.md,
     color: COLORS.textSecondary,
   },
-  formContainer: {
+  form: {
     marginBottom: SPACING.xl,
   },
   signupButton: {
-    marginTop: SPACING.md,
+    marginTop: SPACING.lg,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
+    marginTop: SPACING.xl,
+    marginBottom: SPACING.xxxl,
   },
   footerText: {
-    ...TYPOGRAPHY.body,
     color: COLORS.textSecondary,
+    fontSize: TYPOGRAPHY.sizes.sm,
   },
-  loginText: {
-    ...TYPOGRAPHY.body,
+  linkText: {
     color: COLORS.primary,
-    fontWeight: '600',
-  }
+    fontSize: TYPOGRAPHY.sizes.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.semiBold,
+  },
 });
-
-export default SignupScreen;

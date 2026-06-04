@@ -1,163 +1,118 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, SafeAreaView, TouchableOpacity } from 'react-native';
-import Input from '../../components/Input';
-import PrimaryButton from '../../components/PrimaryButton';
-import { COLORS } from '../../theme/colors';
-import { SPACING } from '../../theme/spacing';
-import { TYPOGRAPHY } from '../../theme/typography';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginUser, clearError } from '../../store/authSlice';
+import { COLORS, TYPOGRAPHY, SPACING } from '../../theme';
+import AppInput from '../../components/common/AppInput';
+import PrimaryButton from '../../components/common/PrimaryButton';
 
-const LoginScreen = ({ onNavigateToSignup, onLoginSuccess }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+const loginSchema = yup.object({
+  email: yup.string().email('Please enter a valid email').required('Email is required'),
+  password: yup.string().required('Password is required'),
+}).required();
 
-  const validate = () => {
-    let isValid = true;
-    let newErrors = {};
+export default function LoginScreen({ navigation }) {
+  const dispatch = useDispatch();
+  const { status, error } = useSelector((state) => state.auth);
 
-    if (!email) {
-      newErrors.email = 'Email is required';
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
-      isValid = false;
+  const { control, handleSubmit } = useForm({
+    resolver: yupResolver(loginSchema),
+    defaultValues: { email: '', password: '' }
+  });
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Login Failed', error);
+      dispatch(clearError());
     }
+  }, [error, dispatch]);
 
-    if (!password) {
-      newErrors.password = 'Password is required';
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleLogin = () => {
-    if (validate()) {
-      setIsLoading(true);
-      // Mock API call
-      setTimeout(() => {
-        setIsLoading(false);
-        if (onLoginSuccess) {
-          onLoginSuccess();
-        } else {
-          alert('Mock Login Successful!');
-        }
-      }, 1500);
-    }
+  const onSubmit = (data) => {
+    dispatch(loginUser(data));
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <View style={styles.content}>
-          <View style={styles.headerContainer}>
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to your CareerMate Command Center.</Text>
-          </View>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Welcome Back</Text>
+        <Text style={styles.subtitle}>Sign in to continue your career journey</Text>
+      </View>
 
-          <View style={styles.formContainer}>
-            <Input
-              label="Email Address"
-              placeholder="Enter your email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-              error={errors.email}
-            />
+      <View style={styles.form}>
+        <AppInput
+          control={control}
+          name="email"
+          label="Email"
+          placeholder="Enter your email"
+          keyboardType="email-address"
+        />
+        <AppInput
+          control={control}
+          name="password"
+          label="Password"
+          placeholder="Enter your password"
+          secureTextEntry
+        />
 
-            <Input
-              label="Password"
-              placeholder="Enter your password"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-              error={errors.password}
-            />
+        <PrimaryButton 
+          title="Sign In" 
+          onPress={handleSubmit(onSubmit)} 
+          loading={status === 'loading'}
+          style={styles.loginButton}
+        />
+      </View>
 
-            <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
-
-            <PrimaryButton
-              title="Sign In"
-              onPress={handleLogin}
-              isLoading={isLoading}
-              style={styles.loginButton}
-            />
-          </View>
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={onNavigateToSignup}>
-              <Text style={styles.signupText}>Create Account</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>Don't have an account? </Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+          <Text style={styles.linkText}>Sign Up</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
   container: {
     flex: 1,
-  },
-  content: {
-    flex: 1,
-    padding: SPACING.lg,
+    backgroundColor: COLORS.background,
+    padding: SPACING.xl,
     justifyContent: 'center',
   },
-  headerContainer: {
-    marginBottom: SPACING.xl,
+  header: {
+    marginBottom: SPACING.xxxl,
   },
   title: {
-    ...TYPOGRAPHY.h1,
+    fontSize: TYPOGRAPHY.sizes.display,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.textPrimary,
     marginBottom: SPACING.xs,
   },
   subtitle: {
-    ...TYPOGRAPHY.body,
+    fontSize: TYPOGRAPHY.sizes.md,
     color: COLORS.textSecondary,
   },
-  formContainer: {
+  form: {
     marginBottom: SPACING.xl,
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: SPACING.lg,
-    marginTop: -SPACING.sm,
-  },
-  forgotPasswordText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-  },
   loginButton: {
-    marginTop: SPACING.sm,
+    marginTop: SPACING.lg,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
+    marginTop: SPACING.xl,
   },
   footerText: {
-    ...TYPOGRAPHY.body,
     color: COLORS.textSecondary,
+    fontSize: TYPOGRAPHY.sizes.sm,
   },
-  signupText: {
-    ...TYPOGRAPHY.body,
+  linkText: {
     color: COLORS.primary,
-    fontWeight: '600',
-  }
+    fontSize: TYPOGRAPHY.sizes.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.semiBold,
+  },
 });
-
-export default LoginScreen;
