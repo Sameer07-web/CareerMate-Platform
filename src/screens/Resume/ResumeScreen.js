@@ -1,127 +1,254 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../theme/colors';
-import { SPACING, BORDER_RADIUS } from '../../theme/spacing';
-import { TYPOGRAPHY } from '../../theme/typography';
-import { resumeService } from '../../services/resumeService';
-import PrimaryButton from '../../components/PrimaryButton';
-import LoadingState from '../../components/LoadingState';
-import EmptyState from '../../components/EmptyState';
-import SectionHeader from '../../components/SectionHeader';
+import * as DocumentPicker from 'expo-document-picker';
+import { useDispatch, useSelector } from 'react-redux';
+import { 
+  fetchResumes, 
+  fetchVersions, 
+  uploadResume, 
+  setPrimaryResumeVersion, 
+  deleteResumeVersion, 
+  reanalyzeResume,
+  setSelectedVersion
+} from '../../store/resumeSlice';
 
-const ResumeScreen = () => {
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
+import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../../theme';
+import SectionHeader from '../../components/common/SectionHeader';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import EmptyState from '../../components/common/EmptyState';
+import PrimaryButton from '../../components/common/PrimaryButton';
+import VersionHistoryList from '../../components/Resume/VersionHistoryList';
+import AnalysisReport from '../../components/Resume/AnalysisReport';
+
+export default function ResumeScreen() {
+  const dispatch = useDispatch();
+  const { currentResume, versions, loading, error, selectedVersion } = useSelector(state => state.resume);
+  const [viewMode, setViewMode] = useState('overview'); // 'overview' | 'analysis'
 
   useEffect(() => {
-    loadResumes();
-  }, []);
+    dispatch(fetchResumes()).then((action) => {
+      if (action.payload && action.payload._id) {
+        dispatch(fetchVersions(action.payload._id));
+      }
+    });
+  }, [dispatch]);
 
-  const loadResumes = async () => {
-    const data = await resumeService.getResumeHistory();
-    setHistory(data);
-    setLoading(false);
+  const handleRefresh = () => {
+    dispatch(fetchResumes()).then((action) => {
+      if (action.payload && action.payload._id) {
+        dispatch(fetchVersions(action.payload._id));
+      }
+    });
   };
 
-  if (loading) {
-    return <LoadingState message="Loading Resume Center..." />;
+  const handleUpload = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/pdf',
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) return;
+
+      const file = result.assets[0];
+
+      // Validation
+      if (file.mimeType !== 'application/pdf') {
+        return Alert.alert('Invalid File', 'Only PDF files are supported.');
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        return Alert.alert('File Too Large', 'File exceeds 5 MB upload limit.');
+      }
+
+      const formData = new FormData();
+      formData.append('resume', {
+        uri: file.uri,
+        name: file.name,
+        type: file.mimeType,
+      });
+
+      dispatch(uploadResume(formData));
+    } catch (err) {
+      console.error('Document picker error:', err);
+      Alert.alert('Upload Error', 'Something went wrong while picking the document.');
+    }
+  };
+
+  const handleDelete = (versionId) => {
+    Alert.alert('Delete Version', 'Are you sure you want to delete this version?', [
+      { text: 'Cancel', style: 'cancel' },
+      { 
+        text: 'Delete', 
+        style: 'destructive', 
+        onPress: () => {
+          if (currentResume) {
+            dispatch(deleteResumeVersion({ versionId, resumeId: currentResume._id }));
+          }
+        }
+      }
+    ]);
+  };
+
+  const handleSetPrimary = (versionId) => {
+    dispatch(setPrimaryResumeVersion(versionId));
+  };
+
+  const handleReanalyze = (versionId) => {
+    if (currentResume) {
+      dispatch(reanalyzeResume({ versionId, resumeId: currentResume._id }));
+      Alert.alert('Reanalysis Started', 'Your resume is being reanalyzed in the background.');
+    }
+  };
+
+  const handleSelectVersion = (version) => {
+    dispatch(setSelectedVersion(version));
+    setViewMode('analysis');
+  };
+
+  if (loading && !currentResume && versions.length === 0) {
+    return <LoadingSpinner />;
   }
 
-  const handleUpload = () => {
-    alert('Mock Upload: Resume uploaded successfully');
-  };
+  const primaryVersionId = currentResume?.primaryVersionId;
+  const primaryVersion = versions.find(v => v._id === primaryVersionId) || versions[0];
+  
+  const displayVersion = selectedVersion || primaryVersion;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <SectionHeader title="Resume Center" />
-
-      <TouchableOpacity style={styles.uploadCard} onPress={handleUpload}>
-        <View style={styles.uploadIconContainer}>
-          <Ionicons name="cloud-upload-outline" size={32} color={COLORS.primary} />
-        </View>
-        <Text style={styles.uploadTitle}>Upload New Resume</Text>
-        <Text style={styles.uploadSubtitle}>PDF, DOCX up to 5MB</Text>
-      </TouchableOpacity>
-
-      <SectionHeader title="Version History" />
+    <View style={styles.container}>
+      <SectionHeader title="Resume Dashboard" />
       
-      {history.length === 0 ? (
-        <EmptyState title="No Resumes" message="Upload your first resume to see history." />
-      ) : (
-        <View style={styles.historyTimeline}>
-          {history.map((resume, index) => (
-            <View key={resume.version} style={styles.historyItem}>
-              <View style={styles.timelineNodeContainer}>
-                <View style={[styles.timelineNode, resume.status === 'Active' && styles.timelineNodeActive]} />
-                {index !== history.length - 1 && <View style={styles.timelineLine} />}
-              </View>
-              
-              <View style={styles.historyCard}>
-                <View style={styles.historyHeader}>
-                  <Text style={styles.versionText}>{resume.version}</Text>
-                  <View style={[styles.badge, resume.status === 'Active' ? styles.badgeActive : styles.badgeArchived]}>
-                    <Text style={[styles.badgeText, resume.status === 'Active' ? styles.badgeTextActive : styles.badgeTextArchived]}>
-                      {resume.status}
-                    </Text>
-                  </View>
-                </View>
-                
-                <Text style={styles.dateText}>Uploaded: {resume.date}</Text>
-                
-                <View style={styles.scoreRow}>
-                  <Ionicons name="analytics" size={16} color={COLORS.primary} />
-                  <Text style={styles.scoreText}>ATS Score: {resume.score}/100</Text>
-                </View>
-
-                {resume.status === 'Active' && (
-                  <View style={styles.actionRow}>
-                    <TouchableOpacity style={styles.iconBtn}>
-                      <Ionicons name="eye-outline" size={20} color={COLORS.textPrimary} />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.iconBtn}>
-                      <Ionicons name="trash-outline" size={20} color={COLORS.warning} />
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={handleRefresh} tintColor={COLORS.primary} />
+        }
+      >
+        {/* TOP METRICS CARD */}
+        {primaryVersion && (
+          <View style={styles.metricsCard}>
+            <View style={styles.metricItem}>
+              <Text style={styles.metricValue}>{primaryVersion.analysis?.atsScore || '...'}</Text>
+              <Text style={styles.metricLabel}>Primary ATS Score</Text>
             </View>
-          ))}
-        </View>
-      )}
-
-      {history.length > 1 && (
-        <View style={styles.trendCard}>
-          <Text style={styles.trendTitle}>ATS Progression</Text>
-          <View style={styles.trendRow}>
-            {history.slice().reverse().map((r, i, arr) => (
-              <React.Fragment key={r.version}>
-                <View style={styles.trendItem}>
-                  <Text style={styles.trendVersion}>{r.version}</Text>
-                  <Text style={styles.trendScore}>{r.score}</Text>
-                </View>
-                {i !== arr.length - 1 && (
-                  <Ionicons name="arrow-forward" size={16} color={COLORS.success} style={{ marginHorizontal: SPACING.sm }} />
-                )}
-              </React.Fragment>
-            ))}
+            <View style={styles.metricDivider} />
+            <View style={styles.metricItem}>
+              <Text style={styles.metricValue}>{versions.length}</Text>
+              <Text style={styles.metricLabel}>Total Versions</Text>
+            </View>
+            <View style={styles.metricDivider} />
+            <View style={styles.metricItem}>
+              <Text style={styles.metricValueSmall}>
+                {primaryVersion.analysis?.analyzedAt 
+                  ? new Date(primaryVersion.analysis.analyzedAt).toLocaleDateString() 
+                  : 'N/A'}
+              </Text>
+              <Text style={styles.metricLabel}>Last Analyzed</Text>
+            </View>
           </View>
-          <Text style={styles.trendSubtitle}>Your resume is getting stronger!</Text>
-        </View>
-      )}
+        )}
 
-      <View style={{ height: SPACING.xxl }} />
-    </ScrollView>
+        {/* UPLOAD CTA */}
+        <TouchableOpacity style={styles.uploadCard} onPress={handleUpload} disabled={loading}>
+          <View style={styles.uploadIconContainer}>
+            <Ionicons name="cloud-upload-outline" size={32} color={COLORS.primary} />
+          </View>
+          <Text style={styles.uploadTitle}>{loading ? 'Uploading...' : 'Upload New Resume'}</Text>
+          <Text style={styles.uploadSubtitle}>PDF only, up to 5MB</Text>
+        </TouchableOpacity>
+
+        {error && <Text style={styles.errorText}>{error}</Text>}
+
+        {versions.length === 0 ? (
+          <EmptyState title="No Resumes" message="Upload your first resume to get started." />
+        ) : (
+          <View style={styles.tabsContainer}>
+            <View style={styles.tabHeader}>
+              <TouchableOpacity 
+                style={[styles.tabBtn, viewMode === 'overview' && styles.tabBtnActive]}
+                onPress={() => setViewMode('overview')}
+              >
+                <Text style={[styles.tabText, viewMode === 'overview' && styles.tabTextActive]}>History</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.tabBtn, viewMode === 'analysis' && styles.tabBtnActive]}
+                onPress={() => setViewMode('analysis')}
+              >
+                <Text style={[styles.tabText, viewMode === 'analysis' && styles.tabTextActive]}>ATS Report</Text>
+              </TouchableOpacity>
+            </View>
+
+            {viewMode === 'overview' ? (
+              <VersionHistoryList 
+                versions={versions}
+                primaryVersionId={primaryVersionId}
+                onSelect={handleSelectVersion}
+                onSetPrimary={handleSetPrimary}
+                onDelete={handleDelete}
+                onReanalyze={handleReanalyze}
+              />
+            ) : (
+              <View style={styles.analysisSection}>
+                {displayVersion && (
+                  <Text style={styles.analysisTitle}>
+                    Report for Version {displayVersion.versionNumber}
+                  </Text>
+                )}
+                <AnalysisReport analysis={displayVersion?.analysis} />
+              </View>
+            )}
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  content: {
+  scrollContent: {
     padding: SPACING.lg,
+  },
+  metricsCard: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.card,
+    borderRadius: BORDER_RADIUS.lg,
+    paddingVertical: SPACING.lg,
+    marginBottom: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+  },
+  metricItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  metricDivider: {
+    width: 1,
+    height: '70%',
+    backgroundColor: COLORS.border,
+  },
+  metricValue: {
+    fontSize: 24,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: COLORS.primary,
+  },
+  metricValueSmall: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.semiBold,
+    color: COLORS.textPrimary,
+    marginTop: 6,
+    marginBottom: 2,
+  },
+  metricLabel: {
+    fontSize: TYPOGRAPHY.sizes.xs,
+    color: COLORS.textSecondary,
+    marginTop: SPACING.xs,
   },
   uploadCard: {
     backgroundColor: 'rgba(79, 70, 229, 0.05)',
@@ -151,145 +278,45 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.bodySmall,
     color: COLORS.textSecondary,
   },
-  historyTimeline: {
-    marginTop: SPACING.md,
-  },
-  historyItem: {
-    flexDirection: 'row',
-    marginBottom: SPACING.lg,
-  },
-  timelineNodeContainer: {
-    alignItems: 'center',
-    marginRight: SPACING.md,
-  },
-  timelineNode: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: COLORS.border,
-    zIndex: 1,
-  },
-  timelineNodeActive: {
-    backgroundColor: COLORS.primary,
-    borderWidth: 4,
-    borderColor: 'rgba(79, 70, 229, 0.3)',
-  },
-  timelineLine: {
-    width: 2,
-    flex: 1,
-    backgroundColor: COLORS.border,
-    marginTop: -8,
-    marginBottom: -24,
-  },
-  historyCard: {
-    flex: 1,
-    backgroundColor: COLORS.card,
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  historyHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.xs,
-  },
-  versionText: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.textPrimary,
-  },
-  badge: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: BORDER_RADIUS.full,
-    borderWidth: 1,
-  },
-  badgeActive: {
-    borderColor: COLORS.success,
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-  },
-  badgeArchived: {
-    borderColor: COLORS.border,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  badgeText: {
-    ...TYPOGRAPHY.caption,
-    fontWeight: 'bold',
-  },
-  badgeTextActive: {
-    color: COLORS.success,
-  },
-  badgeTextArchived: {
-    color: COLORS.textSecondary,
-  },
-  dateText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.sm,
-  },
-  scoreRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(79, 70, 229, 0.1)',
-    padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.sm,
-    marginBottom: SPACING.sm,
-  },
-  scoreText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.primary,
-    fontWeight: '600',
-    marginLeft: SPACING.xs,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingTop: SPACING.sm,
-    marginTop: SPACING.xs,
-  },
-  iconBtn: {
-    marginLeft: SPACING.md,
-    padding: SPACING.xs,
-  },
-  trendCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.lg,
-    marginTop: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: 'center',
-  },
-  trendTitle: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.textPrimary,
+  errorText: {
+    color: COLORS.error,
+    textAlign: 'center',
     marginBottom: SPACING.md,
   },
-  trendRow: {
+  tabsContainer: {
+    flex: 1,
+  },
+  tabHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
     marginBottom: SPACING.md,
   },
-  trendItem: {
-    alignItems: 'center',
+  tabBtn: {
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
-  trendVersion: {
-    ...TYPOGRAPHY.caption,
+  tabBtnActive: {
+    borderBottomColor: COLORS.primary,
+  },
+  tabText: {
+    fontSize: TYPOGRAPHY.sizes.md,
     color: COLORS.textSecondary,
-    marginBottom: 4,
+    fontFamily: TYPOGRAPHY.fontFamily.semiBold,
   },
-  trendScore: {
-    ...TYPOGRAPHY.h3,
+  tabTextActive: {
     color: COLORS.primary,
   },
-  trendSubtitle: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.success,
+  analysisSection: {
+    flex: 1,
+    marginTop: SPACING.sm,
   },
+  analysisTitle: {
+    fontSize: TYPOGRAPHY.sizes.lg,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.md,
+  }
 });
-
-export default ResumeScreen;
