@@ -1,23 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../theme/colors';
-import { SPACING, BORDER_RADIUS } from '../../theme/spacing';
-import { TYPOGRAPHY } from '../../theme/typography';
-import { applicationService } from '../../services/applicationService';
-import LoadingState from '../../components/LoadingState';
-import EmptyState from '../../components/EmptyState';
-import SectionHeader from '../../components/SectionHeader';
+import { useDispatch, useSelector } from 'react-redux';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../../theme';
+import { fetchApplications, createApplication, updateApplication, deleteApplication } from '../../store/applicationsSlice';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import EmptyState from '../../components/common/EmptyState';
+import ErrorState from '../../components/common/ErrorState';
+import AppHeader from '../../components/common/AppHeader';
+import ApplicationFormModal from '../../components/ApplicationFormModal';
 
-const ApplicationCard = ({ app }) => {
+const ApplicationCard = ({ app, onEdit, onDelete }) => {
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Applied': return COLORS.primary;
-      case 'Interview Scheduled': return COLORS.warning;
-      case 'Rejected': return '#EF4444'; // Red
-      case 'Offer': return COLORS.success;
+      case 'applied': return COLORS.info;
+      case 'interviewing': return COLORS.warning;
+      case 'rejected': return COLORS.error;
+      case 'offered': return COLORS.success;
+      case 'saved':
       default: return COLORS.textSecondary;
     }
+  };
+
+  const getDisplayStatus = (status) => {
+    const map = {
+      'applied': 'Applied',
+      'interviewing': 'Interviewing',
+      'rejected': 'Rejected',
+      'offered': 'Offered',
+      'saved': 'Saved'
+    };
+    return map[status] || 'Saved';
+  };
+
+  const confirmDelete = () => {
+    Alert.alert('Delete Application', 'Are you sure you want to delete this application?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => onDelete(app._id) }
+    ]);
   };
 
   return (
@@ -25,24 +45,32 @@ const ApplicationCard = ({ app }) => {
       <View style={styles.cardHeader}>
         <View style={styles.companyInfo}>
           <View style={styles.iconPlaceholder}>
-            <Ionicons name="business" size={24} color={COLORS.textPrimary} />
+            <Text style={styles.iconInitial}>{app.companyName.charAt(0).toUpperCase()}</Text>
           </View>
-          <View>
-            <Text style={styles.companyName}>{app.company}</Text>
-            <Text style={styles.roleName}>{app.role}</Text>
+          <View style={styles.companyTextContainer}>
+            <Text style={styles.companyName} numberOfLines={1}>{app.companyName}</Text>
+            <Text style={styles.roleName} numberOfLines={1}>{app.positionTitle}</Text>
           </View>
+        </View>
+        <View style={styles.actionRow}>
+          <TouchableOpacity onPress={() => onEdit(app)} style={styles.actionBtn}>
+            <Ionicons name="pencil" size={18} color={COLORS.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={confirmDelete} style={styles.actionBtn}>
+            <Ionicons name="trash" size={18} color={COLORS.error} />
+          </TouchableOpacity>
         </View>
       </View>
       
       <View style={styles.cardFooter}>
         <View style={styles.dateContainer}>
           <Ionicons name="calendar-outline" size={14} color={COLORS.textSecondary} />
-          <Text style={styles.dateText}>{app.date}</Text>
+          <Text style={styles.dateText}>{new Date(app.createdAt).toLocaleDateString()}</Text>
         </View>
         
         <View style={[styles.statusBadge, { borderColor: getStatusColor(app.status) }]}>
           <Text style={[styles.statusText, { color: getStatusColor(app.status) }]}>
-            {app.status}
+            {getDisplayStatus(app.status)}
           </Text>
         </View>
       </View>
@@ -50,68 +78,73 @@ const ApplicationCard = ({ app }) => {
   );
 };
 
-const filterTabs = ['All', 'Applied', 'Interview Scheduled', 'Rejected', 'Offer'];
+const filterTabs = ['All', 'Saved', 'Applied', 'Interviewing', 'Rejected', 'Offered'];
 
 const ApplicationsScreen = () => {
-  const [apps, setApps] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const { items: apps, status, error } = useSelector(state => state.applications);
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
+  
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [editingApp, setEditingApp] = useState(null);
 
   useEffect(() => {
-    loadApps();
-  }, []);
+    if (status === 'idle') {
+      dispatch(fetchApplications());
+    }
+  }, [status, dispatch]);
 
-  const loadApps = async () => {
-    const data = await applicationService.getApplications();
-    setApps(data);
-    setLoading(false);
+  const handleAdd = () => {
+    setEditingApp(null);
+    setModalVisible(true);
   };
 
-  if (loading) {
-    return <LoadingState message="Loading Applications..." />;
+  const handleEdit = (app) => {
+    setEditingApp(app);
+    setModalVisible(true);
+  };
+
+  const handleDelete = (id) => {
+    dispatch(deleteApplication(id));
+  };
+
+  const handleFormSubmit = async (data) => {
+    if (editingApp) {
+      await dispatch(updateApplication({ id: editingApp._id, data })).unwrap();
+    } else {
+      await dispatch(createApplication(data)).unwrap();
+    }
+    setModalVisible(false);
+  };
+
+  if (status === 'loading' && apps.length === 0) {
+    return <LoadingSpinner />;
   }
 
-  // Derived stats
-  const totalApplied = apps.length;
-  const totalInterview = apps.filter(a => a.status === 'Interview Scheduled').length;
-  const totalRejected = apps.filter(a => a.status === 'Rejected').length;
-  const totalOffers = apps.filter(a => a.status === 'Offer').length;
-
-  const getPercent = (count) => totalApplied ? Math.round((count / totalApplied) * 100) : 0;
+  if (status === 'failed' && apps.length === 0) {
+    return <ErrorState message={error} onRetry={() => dispatch(fetchApplications())} />;
+  }
 
   // Filtered list
   const filteredApps = apps.filter((app) => {
-    const matchesSearch = app.company.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          app.role.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = activeFilter === 'All' || app.status === activeFilter;
+    const matchesSearch = app.companyName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          app.positionTitle.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = activeFilter === 'All' || app.status.toLowerCase() === activeFilter.toLowerCase();
     return matchesSearch && matchesFilter;
   });
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <SectionHeader title="Application Tracker" />
-      </View>
-
-      <View style={styles.statsContainer}>
-        <View style={styles.statBox}>
-          <Text style={styles.statNum}>{totalApplied}</Text>
-          <Text style={styles.statLabel}>Total</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={[styles.statNum, { color: COLORS.warning }]}>{totalInterview}</Text>
-          <Text style={styles.statLabel}>Interview ({getPercent(totalInterview)}%)</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={[styles.statNum, { color: '#EF4444' }]}>{totalRejected}</Text>
-          <Text style={styles.statLabel}>Rejected ({getPercent(totalRejected)}%)</Text>
-        </View>
-        <View style={styles.statBox}>
-          <Text style={[styles.statNum, { color: COLORS.success }]}>{totalOffers}</Text>
-          <Text style={styles.statLabel}>Offers ({getPercent(totalOffers)}%)</Text>
-        </View>
-      </View>
+      <AppHeader 
+        title="Applications" 
+        rightElement={
+          <TouchableOpacity onPress={handleAdd}>
+            <Ionicons name="add-circle" size={28} color={COLORS.primary} />
+          </TouchableOpacity>
+        }
+      />
       
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color={COLORS.textSecondary} style={styles.searchIcon} />
@@ -139,15 +172,25 @@ const ApplicationsScreen = () => {
       </View>
 
       {filteredApps.length === 0 ? (
-        <EmptyState title="No matches found" message="Try adjusting your search or filters." />
+        <EmptyState title="No applications found" message="Add a new application to track your job search." />
       ) : (
         <FlatList
           data={filteredApps}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id}
           contentContainerStyle={styles.listContainer}
-          renderItem={({ item }) => <ApplicationCard app={item} />}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => <ApplicationCard app={item} onEdit={handleEdit} onDelete={handleDelete} />}
+          refreshing={status === 'loading'}
+          onRefresh={() => dispatch(fetchApplications())}
         />
       )}
+
+      <ApplicationFormModal 
+        visible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        onSubmit={handleFormSubmit}
+        initialData={editingApp}
+      />
     </View>
   );
 };
@@ -156,36 +199,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-  },
-  header: {
-    paddingHorizontal: SPACING.lg,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.lg,
-  },
-  statBox: {
-    backgroundColor: COLORS.card,
-    borderRadius: BORDER_RADIUS.sm,
-    padding: SPACING.sm,
-    flex: 1,
-    marginHorizontal: 4,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  statNum: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.primary,
-  },
-  statLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    fontSize: 10,
-    marginTop: 2,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -196,7 +209,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     borderWidth: 1,
     borderColor: COLORS.border,
-    marginBottom: SPACING.md,
+    marginVertical: SPACING.md,
   },
   searchIcon: {
     marginRight: SPACING.sm,
@@ -205,7 +218,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     color: COLORS.textPrimary,
-    ...TYPOGRAPHY.body,
+    fontSize: TYPOGRAPHY.sizes.md,
   },
   filterWrapper: {
     marginBottom: SPACING.md,
@@ -227,7 +240,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
   },
   filterText: {
-    ...TYPOGRAPHY.bodySmall,
+    fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.textSecondary,
   },
   filterTextActive: {
@@ -249,29 +262,47 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: SPACING.md,
   },
   companyInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   iconPlaceholder: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: BORDER_RADIUS.md,
     backgroundColor: 'rgba(255,255,255,0.05)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: SPACING.md,
   },
+  iconInitial: {
+    color: COLORS.primaryLight,
+    fontSize: TYPOGRAPHY.sizes.xl,
+    fontWeight: 'bold',
+  },
+  companyTextContainer: {
+    flex: 1,
+    paddingRight: SPACING.md,
+  },
   companyName: {
-    ...TYPOGRAPHY.h3,
+    fontSize: TYPOGRAPHY.sizes.lg,
+    fontFamily: TYPOGRAPHY.fontFamily.semiBold,
     color: COLORS.textPrimary,
   },
   roleName: {
-    ...TYPOGRAPHY.bodySmall,
+    fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.textSecondary,
+  },
+  actionRow: {
+    flexDirection: 'row',
+  },
+  actionBtn: {
+    padding: SPACING.xs,
+    marginLeft: SPACING.xs,
   },
   cardFooter: {
     flexDirection: 'row',
@@ -286,7 +317,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dateText: {
-    ...TYPOGRAPHY.caption,
+    fontSize: TYPOGRAPHY.sizes.xs,
     color: COLORS.textSecondary,
     marginLeft: SPACING.xs,
   },
@@ -297,9 +328,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   statusText: {
-    ...TYPOGRAPHY.caption,
+    fontSize: TYPOGRAPHY.sizes.xs,
     fontWeight: 'bold',
   }
 });
-
 export default ApplicationsScreen;
