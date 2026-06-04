@@ -4,6 +4,7 @@ import userReducer from './userSlice';
 import appReducer from './appSlice';
 import applicationsReducer from './applicationsSlice';
 import resumeReducer from './resumeSlice';
+import aiReducer from './aiSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     app: appReducer,
     applications: applicationsReducer,
     resume: resumeReducer,
+    ai: aiReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
