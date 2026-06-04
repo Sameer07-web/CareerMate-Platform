@@ -1,0 +1,105 @@
+import React from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { StyleSheet, SafeAreaView } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS } from './src/theme/colors';
+
+// Auth & Setup
+import SplashScreen from './src/screens/SplashScreen';
+import LoginScreen from './src/screens/Auth/LoginScreen';
+import SignupScreen from './src/screens/Auth/SignupScreen';
+
+// Main App Screens
+import DashboardScreen from './src/screens/Dashboard/DashboardScreen';
+import ProfileScreen from './src/screens/Profile/ProfileScreen';
+import ResumeScreen from './src/screens/Resume/ResumeScreen';
+import ATSAnalysisScreen from './src/screens/ATS/ATSAnalysisScreen';
+import InterviewPrepScreen from './src/screens/InterviewPrep/InterviewPrepScreen';
+import MockInterviewScreen from './src/screens/InterviewPrep/MockInterviewScreen';
+import AICoachScreen from './src/screens/AICoach/AICoachScreen';
+import ApplicationsScreen from './src/screens/Applications/ApplicationsScreen';
+import SettingsScreen from './src/screens/Settings/SettingsScreen';
+
+const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
+
+const TabNavigator = () => {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          switch (route.name) {
+            case 'Home': iconName = focused ? 'home' : 'home-outline'; break;
+            case 'Resume': iconName = focused ? 'document-text' : 'document-text-outline'; break;
+            case 'Interview': iconName = focused ? 'videocam' : 'videocam-outline'; break;
+            case 'Coach': iconName = focused ? 'chatbubbles' : 'chatbubbles-outline'; break;
+            case 'Apps': iconName = focused ? 'briefcase' : 'briefcase-outline'; break;
+            case 'Profile': iconName = focused ? 'person' : 'person-outline'; break;
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: COLORS.textSecondary,
+        tabBarStyle: {
+          backgroundColor: COLORS.card,
+          borderTopColor: COLORS.border,
+          paddingBottom: 5,
+        },
+      })}
+    >
+      <Tab.Screen name="Home" component={DashboardScreen} />
+      <Tab.Screen name="Resume" component={ResumeScreen} />
+      <Tab.Screen name="Interview" component={InterviewPrepScreen} />
+      <Tab.Screen name="Coach" component={AICoachScreen} />
+      <Tab.Screen name="Apps" component={ApplicationsScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+};
+
+export default function App() {
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="light" />
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName="Splash"
+          screenOptions={{ headerShown: false }}
+        >
+          {/* Auth Flow */}
+          <Stack.Screen name="Splash">
+            {props => <SplashScreen {...props} onNavigate={(screen) => props.navigation.replace(screen === 'Dashboard' ? 'Main' : screen)} />}
+          </Stack.Screen>
+          <Stack.Screen name="Login">
+            {props => <LoginScreen {...props} onNavigateToSignup={() => props.navigation.navigate('Signup')} onLoginSuccess={() => props.navigation.replace('Main')} />}
+          </Stack.Screen>
+          <Stack.Screen name="Signup">
+            {props => <SignupScreen {...props} onNavigateToLogin={() => props.navigation.navigate('Login')} onSignupSuccess={() => props.navigation.replace('Main')} />}
+          </Stack.Screen>
+
+          {/* Main App Flow with Tabs */}
+          <Stack.Screen name="Main" component={TabNavigator} />
+
+          {/* Deeper Screens */}
+          <Stack.Screen name="ATSAnalysis" component={ATSAnalysisScreen} />
+          <Stack.Screen name="MockInterview" component={MockInterviewScreen} />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+});

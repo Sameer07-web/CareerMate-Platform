@@ -1,29 +1,23 @@
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
 import { StyleSheet, SafeAreaView } from 'react-native';
-import LoginScreen from './src/screens/Auth/LoginScreen';
-import SignupScreen from './src/screens/Auth/SignupScreen';
+import { NavigationContainer } from '@react-navigation/native';
+import { Provider } from 'react-redux';
+import { store } from './src/store/store';
 import { COLORS } from './src/theme/colors';
 
-export default function App() {
-  const [currentScreen, setCurrentScreen] = useState('Login');
+import RootNavigator from './src/navigation/RootNavigator';
 
+export default function App() {
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="light" />
-      
-      {currentScreen === 'Login' ? (
-        <LoginScreen 
-          onNavigateToSignup={() => setCurrentScreen('Signup')} 
-          onLoginSuccess={() => alert('Proceed to Main App!')}
-        />
-      ) : (
-        <SignupScreen 
-          onNavigateToLogin={() => setCurrentScreen('Login')} 
-          onSignupSuccess={() => alert('Account created! Proceed to Main App!')}
-        />
-      )}
-    </SafeAreaView>
+    <Provider store={store}>
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="light" />
+        <NavigationContainer>
+          <RootNavigator />
+        </NavigationContainer>
+      </SafeAreaView>
+    </Provider>
   );
 }
 
