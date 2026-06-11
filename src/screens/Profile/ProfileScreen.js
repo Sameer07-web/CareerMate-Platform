@@ -70,18 +70,18 @@ const ProfileScreen = ({ navigation }) => {
         </View>
       </View>
 
-      <ScoreCard 
-        title="Placement Readiness" 
-        score={78} 
-        isProgress={true} 
+      <ScoreCard
+        title="Placement Readiness"
+        score={78}
+        isProgress={true}
       />
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Career Goal</Text>
         {isEditing ? (
-          <TextInput 
-            style={[styles.input, { height: 80, textAlignVertical: 'top' }]} 
-            value={user?.careerGoal} 
+          <TextInput
+            style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+            value={user?.careerGoal}
             placeholderTextColor={COLORS.textSecondary}
             multiline
           />
@@ -92,7 +92,7 @@ const ProfileScreen = ({ navigation }) => {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Education</Text>
-        
+
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>College</Text>
           {isEditing ? (
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(79, 70, 229, 0.1)',
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     marginRight: SPACING.sm,
     marginBottom: SPACING.sm,
     borderWidth: 1,

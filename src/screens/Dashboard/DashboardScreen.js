@@ -66,10 +66,10 @@ const DashboardScreen = ({ navigation }) => {
         </View>
       </View>
 
-      <ScoreCard 
-        title="Placement Readiness" 
-        score={analytics?.placementReadiness} 
-        isProgress={true} 
+      <ScoreCard
+        title="Placement Readiness"
+        score={analytics?.placementReadiness}
+        isProgress={true}
       />
 
       <SectionHeader title="Weekly Progress" />
@@ -95,7 +95,7 @@ const DashboardScreen = ({ navigation }) => {
           </View>
           <Text style={styles.trendScore}>{analytics?.atsScore}</Text>
         </View>
-        
+
         <View style={styles.trendCard}>
           <View style={styles.trendHeader}>
             <Text style={styles.trendTitle}>Resume</Text>
@@ -111,7 +111,7 @@ const DashboardScreen = ({ navigation }) => {
           </View>
           <Text style={styles.trendScore}>{analytics?.interviewScore}</Text>
         </View>
-        
+
         <View style={styles.trendCard}>
           <View style={styles.trendHeader}>
             <Text style={styles.trendTitle}>DSA</Text>
@@ -135,33 +135,33 @@ const DashboardScreen = ({ navigation }) => {
 
       <SectionHeader title="Quick Actions" />
       <View style={styles.row}>
-        <FeatureCard 
-          title="Resume Center" 
-          icon="document-text" 
-          onPress={() => navigation.navigate('Resume')} 
-          isSmall 
+        <FeatureCard
+          title="Resume Center"
+          icon="document-text"
+          onPress={() => navigation.navigate('Resume')}
+          isSmall
         />
         <View style={{ width: SPACING.md }} />
-        <FeatureCard 
-          title="ATS Analysis" 
-          icon="analytics" 
-          onPress={() => navigation.navigate('ATSAnalysis')} 
-          isSmall 
+        <FeatureCard
+          title="ATS Analysis"
+          icon="analytics"
+          onPress={() => navigation.navigate('ATSAnalysis')}
+          isSmall
         />
       </View>
       <View style={[styles.row, { marginTop: SPACING.md }]}>
-        <FeatureCard 
-          title="Interview Prep" 
-          icon="videocam" 
-          onPress={() => navigation.navigate('Interview')} 
-          isSmall 
+        <FeatureCard
+          title="Interview Prep"
+          icon="videocam"
+          onPress={() => navigation.navigate('Interview')}
+          isSmall
         />
         <View style={{ width: SPACING.md }} />
-        <FeatureCard 
-          title="AI Coach" 
-          icon="chatbubbles" 
-          onPress={() => navigation.navigate('Coach')} 
-          isSmall 
+        <FeatureCard
+          title="AI Coach"
+          icon="chatbubbles"
+          onPress={() => navigation.navigate('Coach')}
+          isSmall
         />
       </View>
 
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(245, 158, 11, 0.15)', // Warning/Amber tinted
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     borderWidth: 1,
     borderColor: COLORS.warning,
   },
@@ -236,13 +236,13 @@ const styles = StyleSheet.create({
   xpBarBackground: {
     height: 6,
     backgroundColor: COLORS.border,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     overflow: 'hidden',
   },
   xpBarFill: {
     height: '100%',
     backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
   },
   chartCard: {
     backgroundColor: COLORS.card,

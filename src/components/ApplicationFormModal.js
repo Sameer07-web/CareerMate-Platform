@@ -4,10 +4,10 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../../theme';
-import AppInput from '../common/AppInput';
-import PrimaryButton from '../common/PrimaryButton';
-import SecondaryButton from '../common/SecondaryButton';
+import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../theme';
+import AppInput from './common/AppInput';
+import PrimaryButton from './common/PrimaryButton';
+import SecondaryButton from './common/SecondaryButton';
 
 const applicationSchema = yup.object({
   companyName: yup.string().required('Company name is required'),
@@ -20,7 +20,7 @@ const applicationSchema = yup.object({
 
 export default function ApplicationFormModal({ visible, onClose, onSubmit, initialData }) {
   const isEditing = !!initialData;
-  
+
   const { control, handleSubmit, reset, setValue, watch } = useForm({
     resolver: yupResolver(applicationSchema),
     defaultValues: {
@@ -94,12 +94,12 @@ export default function ApplicationFormModal({ visible, onClose, onSubmit, initi
             label="Position Title*"
             placeholder="e.g. Frontend Engineer"
           />
-          
+
           <Text style={styles.label}>Status</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.statusScroll}>
             {statuses.map(s => (
-              <TouchableOpacity 
-                key={s.value} 
+              <TouchableOpacity
+                key={s.value}
                 style={[styles.statusPill, currentStatus === s.value && styles.activePill]}
                 onPress={() => setValue('status', s.value)}
               >
@@ -126,7 +126,7 @@ export default function ApplicationFormModal({ visible, onClose, onSubmit, initi
             label="Source"
             placeholder="e.g. LinkedIn"
           />
-          
+
           <View style={styles.buttonContainer}>
             <SecondaryButton title="Cancel" onPress={onClose} style={styles.halfBtn} />
             <PrimaryButton title={isEditing ? 'Save Changes' : 'Add Application'} onPress={handleSubmit(handleFormSubmit)} style={styles.halfBtn} />
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   statusPill: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     borderWidth: 1,
     borderColor: COLORS.border,
     marginRight: SPACING.sm,

@@ -1,9 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../theme/colors';
-import { SPACING, BORDER_RADIUS } from '../theme/spacing';
-import { TYPOGRAPHY } from '../theme/typography';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../theme';
 
 const FeatureCard = ({ title, subtitle, icon, onPress, isSmall = false }) => {
   return (
@@ -43,13 +41,13 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   title: {
-    ...TYPOGRAPHY.body,
-    fontWeight: '600',
+    fontSize: TYPOGRAPHY.sizes.md,
+    fontFamily: TYPOGRAPHY.fontFamily.semiBold,
     color: COLORS.textPrimary,
     marginBottom: SPACING.xs,
   },
   subtitle: {
-    ...TYPOGRAPHY.caption,
+    fontSize: TYPOGRAPHY.sizes.xs,
     color: COLORS.textSecondary,
   }
 });

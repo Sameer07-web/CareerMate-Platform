@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS } from '../theme/colors';
-import { SPACING, BORDER_RADIUS } from '../theme/spacing';
-import { TYPOGRAPHY } from '../theme/typography';
+import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '../theme';
 
 const ScoreCard = ({ title, score, subtitle, isProgress = false }) => {
   return (
@@ -34,7 +32,8 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   title: {
-    ...TYPOGRAPHY.h3,
+    fontSize: TYPOGRAPHY.sizes.lg,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.textPrimary,
     marginBottom: SPACING.sm,
   },
@@ -43,28 +42,29 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   score: {
-    ...TYPOGRAPHY.h1,
+    fontSize: TYPOGRAPHY.sizes.xxxl,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.primary,
   },
   maxScore: {
-    ...TYPOGRAPHY.body,
+    fontSize: TYPOGRAPHY.sizes.md,
     color: COLORS.textSecondary,
     marginLeft: SPACING.xs,
   },
   progressBarContainer: {
     height: 8,
     backgroundColor: COLORS.border,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     marginTop: SPACING.md,
     overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
     backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
   },
   subtitle: {
-    ...TYPOGRAPHY.bodySmall,
+    fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.textSecondary,
     marginTop: SPACING.sm,
   }

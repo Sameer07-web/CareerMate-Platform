@@ -34,10 +34,10 @@ const AICoachScreen = () => {
   const handleSend = async (customText = null) => {
     const textToSend = customText || inputText;
     if (!textToSend.trim()) return;
-    
+
     addMessage('user', textToSend);
     if (!customText) setInputText('');
-    
+
     // Simulate AI thinking
     setTimeout(() => {
       addMessage('ai', 'This is a personalized mock response regarding: ' + textToSend);
@@ -55,7 +55,7 @@ const AICoachScreen = () => {
   const generateRoadmap = (role) => {
     setShowRoadmapSelector(false);
     addMessage('user', `Generate a Placement Roadmap for ${role}`);
-    
+
     setTimeout(() => {
       const roadmapText = `Here is your customized Placement Roadmap for ${role}:
 
@@ -87,26 +87,26 @@ Would you like me to expand on any of these weeks?`;
   }
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <View style={styles.header}>
         <SectionHeader title="AI Career Coach" />
       </View>
-      
-      <ScrollView 
+
+      <ScrollView
         ref={scrollViewRef}
-        style={styles.chatArea} 
+        style={styles.chatArea}
         contentContainerStyle={styles.chatContent}
         onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
       >
         {messages.map((msg) => (
-          <View 
-            key={msg.id} 
+          <View
+            key={msg.id}
             style={[
-              styles.messageBubble, 
+              styles.messageBubble,
               msg.sender === 'user' ? styles.userBubble : styles.aiBubble
             ]}
           >
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(79, 70, 229, 0.15)',
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     marginRight: SPACING.sm,
     borderWidth: 1,
     borderColor: COLORS.primary,
@@ -244,12 +244,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
-    paddingBottom: Platform.OS === 'ios' ? SPACING.xl : SPACING.md, 
+    paddingBottom: Platform.OS === 'ios' ? SPACING.xl : SPACING.md,
   },
   input: {
     flex: 1,
     backgroundColor: COLORS.background,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
     maxHeight: 100,

@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS } from '../theme/colors';
-import { SPACING } from '../theme/spacing';
-import { TYPOGRAPHY } from '../theme/typography';
+import { COLORS, SPACING, TYPOGRAPHY } from '../theme';
 
 const SectionHeader = ({ title, actionTitle, onActionPress }) => {
   return (
@@ -24,13 +22,14 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   title: {
-    ...TYPOGRAPHY.h3,
+    fontSize: TYPOGRAPHY.sizes.lg,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.textPrimary,
   },
   action: {
-    ...TYPOGRAPHY.bodySmall,
+    fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.primary,
-    fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily.semiBold,
   }
 });
 

@@ -14,7 +14,7 @@ import {
 } from '../../store/resumeSlice';
 
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '../../theme';
-import SectionHeader from '../../components/common/SectionHeader';
+import SectionHeader from '../../components/SectionHeader';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EmptyState from '../../components/common/EmptyState';
 import PrimaryButton from '../../components/common/PrimaryButton';
@@ -270,12 +270,13 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   uploadTitle: {
-    ...TYPOGRAPHY.h3,
+    fontSize: TYPOGRAPHY.sizes.lg,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.primary,
     marginBottom: SPACING.xs,
   },
   uploadSubtitle: {
-    ...TYPOGRAPHY.bodySmall,
+    fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.textSecondary,
   },
   errorText: {

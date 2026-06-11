@@ -61,13 +61,13 @@ const ApplicationCard = ({ app, onEdit, onDelete }) => {
           </TouchableOpacity>
         </View>
       </View>
-      
+
       <View style={styles.cardFooter}>
         <View style={styles.dateContainer}>
           <Ionicons name="calendar-outline" size={14} color={COLORS.textSecondary} />
           <Text style={styles.dateText}>{new Date(app.createdAt).toLocaleDateString()}</Text>
         </View>
-        
+
         <View style={[styles.statusBadge, { borderColor: getStatusColor(app.status) }]}>
           <Text style={[styles.statusText, { color: getStatusColor(app.status) }]}>
             {getDisplayStatus(app.status)}
@@ -83,10 +83,10 @@ const filterTabs = ['All', 'Saved', 'Applied', 'Interviewing', 'Rejected', 'Offe
 const ApplicationsScreen = () => {
   const dispatch = useDispatch();
   const { items: apps, status, error } = useSelector(state => state.applications);
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
-  
+
   const [isModalVisible, setModalVisible] = useState(false);
   const [editingApp, setEditingApp] = useState(null);
 
@@ -129,23 +129,23 @@ const ApplicationsScreen = () => {
 
   // Filtered list
   const filteredApps = apps.filter((app) => {
-    const matchesSearch = app.companyName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          app.positionTitle.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = app.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      app.positionTitle.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = activeFilter === 'All' || app.status.toLowerCase() === activeFilter.toLowerCase();
     return matchesSearch && matchesFilter;
   });
 
   return (
     <View style={styles.container}>
-      <AppHeader 
-        title="Applications" 
+      <AppHeader
+        title="Applications"
         rightElement={
           <TouchableOpacity onPress={handleAdd}>
             <Ionicons name="add-circle" size={28} color={COLORS.primary} />
           </TouchableOpacity>
         }
       />
-      
+
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color={COLORS.textSecondary} style={styles.searchIcon} />
         <TextInput
@@ -160,8 +160,8 @@ const ApplicationsScreen = () => {
       <View style={styles.filterWrapper}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
           {filterTabs.map((tab) => (
-            <TouchableOpacity 
-              key={tab} 
+            <TouchableOpacity
+              key={tab}
               style={[styles.filterPill, activeFilter === tab && styles.filterPillActive]}
               onPress={() => setActiveFilter(tab)}
             >
@@ -185,7 +185,7 @@ const ApplicationsScreen = () => {
         />
       )}
 
-      <ApplicationFormModal 
+      <ApplicationFormModal
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
         onSubmit={handleFormSubmit}
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   filterPill: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     borderWidth: 1,
     borderColor: COLORS.border,
     marginRight: SPACING.sm,
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
   statusBadge: {
     paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     borderWidth: 1,
   },
   statusText: {

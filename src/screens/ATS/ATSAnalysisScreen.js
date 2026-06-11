@@ -57,10 +57,10 @@ const ATSAnalysisScreen = () => {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <SectionHeader title="ATS Analysis" />
-      
-      <ScoreCard 
-        title="Resume Match Percentage" 
-        score={analysis?.score} 
+
+      <ScoreCard
+        title="Resume Match Percentage"
+        score={analysis?.score}
         isProgress={true}
         subtitle="Based on software engineering roles."
       />
@@ -124,7 +124,7 @@ const ATSAnalysisScreen = () => {
         </View>
         {renderSimpleList(analysis?.suggestions, COLORS.primary)}
       </View>
-      
+
       <View style={{ height: SPACING.xxl }} />
     </ScrollView>
   );
@@ -163,14 +163,14 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 8,
     backgroundColor: COLORS.border,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     marginHorizontal: SPACING.sm,
     overflow: 'hidden',
   },
   breakdownBarFill: {
     height: '100%',
     backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
   },
   breakdownValue: {
     ...TYPOGRAPHY.caption,

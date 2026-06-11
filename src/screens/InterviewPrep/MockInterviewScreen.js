@@ -23,7 +23,7 @@ const MockInterviewScreen = ({ navigation }) => {
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [loading, setLoading] = useState(false);
-  
+
   const [timeLeft, setTimeLeft] = useState(150); // 2:30 in seconds
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState(null);
@@ -72,23 +72,23 @@ const MockInterviewScreen = ({ navigation }) => {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <SectionHeader title="Mock Interview" />
-      
+
       {/* Step 1: Role Selection */}
       {step === 1 && (
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Select Target Role</Text>
           <Text style={styles.cardSubtitle}>Choose the role you are preparing for.</Text>
-          
+
           {['Full Stack Developer', 'Frontend Developer', 'Backend Developer', 'Java Developer'].map(r => (
-            <TouchableOpacity 
-              key={r} 
+            <TouchableOpacity
+              key={r}
               style={[styles.optionBtn, role === r && styles.optionBtnActive]}
               onPress={() => setRole(r)}
             >
               <Text style={[styles.optionText, role === r && styles.optionTextActive]}>{r}</Text>
             </TouchableOpacity>
           ))}
-          
+
           <PrimaryButton title="Next" onPress={() => setStep(2)} disabled={!role} style={{ marginTop: SPACING.md }} />
         </View>
       )}
@@ -98,17 +98,17 @@ const MockInterviewScreen = ({ navigation }) => {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Select Difficulty</Text>
           <Text style={styles.cardSubtitle}>Choose the complexity of the questions.</Text>
-          
+
           {['Beginner', 'Intermediate', 'Advanced'].map(d => (
-            <TouchableOpacity 
-              key={d} 
+            <TouchableOpacity
+              key={d}
               style={[styles.optionBtn, difficulty === d && styles.optionBtnActive]}
               onPress={() => setDifficulty(d)}
             >
               <Text style={[styles.optionText, difficulty === d && styles.optionTextActive]}>{d}</Text>
             </TouchableOpacity>
           ))}
-          
+
           <PrimaryButton title="Start Interview" onPress={loadQuestions} disabled={!difficulty} style={{ marginTop: SPACING.md }} />
         </View>
       )}
@@ -123,15 +123,15 @@ const MockInterviewScreen = ({ navigation }) => {
               <Text style={styles.timerText}>{formatTime(timeLeft)} Remaining</Text>
             </View>
           </View>
-          
+
           <ProgressBar progress={((currentQuestionIndex + 1) / questions.length) * 100} />
-          
+
           <View style={styles.spacing} />
-          
+
           <Text style={styles.questionText}>{questions[currentQuestionIndex].question}</Text>
-          
+
           <View style={styles.spacing} />
-          
+
           <TextInput
             style={styles.inputArea}
             multiline
@@ -140,17 +140,17 @@ const MockInterviewScreen = ({ navigation }) => {
             value={answer}
             onChangeText={setAnswer}
           />
-          
+
           <View style={styles.actionRow}>
             <TouchableOpacity style={styles.voiceBtn} disabled>
               <Ionicons name="mic-off-outline" size={20} color={COLORS.textSecondary} />
               <Text style={styles.voiceText}>Voice Interview (Coming Soon)</Text>
             </TouchableOpacity>
-            
-            <PrimaryButton 
-              title="Submit Answer" 
-              onPress={handleSubmit} 
-              disabled={answer.length === 0} 
+
+            <PrimaryButton
+              title="Submit Answer"
+              onPress={handleSubmit}
+              disabled={answer.length === 0}
             />
           </View>
         </View>
@@ -164,11 +164,11 @@ const MockInterviewScreen = ({ navigation }) => {
               <Ionicons name="analytics" size={24} color={COLORS.primary} />
               <Text style={styles.feedbackTitle}>Performance Summary</Text>
             </View>
-            
+
             <Text style={styles.scoreText}>Overall Score: {feedback.overallScore}/100</Text>
-            
+
             <View style={styles.spacing} />
-            
+
             <Text style={styles.subHeading}>AI Evaluation</Text>
             <ScoreCard title="Communication Score" score={feedback.detailedScores.communication} isProgress />
             <ScoreCard title="Technical Score" score={feedback.detailedScores.technical} isProgress />
@@ -184,9 +184,9 @@ const MockInterviewScreen = ({ navigation }) => {
                 <Text style={styles.listText}>{s}</Text>
               </View>
             ))}
-            
+
             <View style={styles.spacing} />
-            
+
             <Text style={styles.subHeading}>Areas For Improvement</Text>
             {feedback.improvements.map((s, i) => (
               <View key={i} style={styles.listItem}>
@@ -196,7 +196,7 @@ const MockInterviewScreen = ({ navigation }) => {
             ))}
 
             <View style={styles.spacing} />
-            
+
             <Text style={[styles.subHeading, { color: COLORS.primary }]}>Recommended Topics To Improve</Text>
             {feedback.recommendedTopics.map((s, i) => (
               <View key={i} style={styles.listItem}>
@@ -204,7 +204,7 @@ const MockInterviewScreen = ({ navigation }) => {
                 <Text style={styles.listText}>{s}</Text>
               </View>
             ))}
-            
+
             <PrimaryButton title="Return to Dashboard" onPress={handleFinish} style={{ marginTop: SPACING.xl }} />
           </View>
         </View>
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   progressBarBg: {
     height: 6,
     backgroundColor: COLORS.border,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     overflow: 'hidden',
     marginBottom: SPACING.md,
   },
