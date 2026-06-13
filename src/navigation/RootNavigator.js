@@ -9,19 +9,14 @@ import SplashScreen from '../screens/SplashScreen';
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
-  const { isAuthenticated, status } = useSelector((state) => state.auth);
-
-  if (status === 'loading') {
-    return (
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Splash" component={SplashScreen} />
-      </Stack.Navigator>
-    );
-  }
+  const { isAuthenticated, appStatus } = useSelector((state) => state.auth);
+  console.log('[ROOT] rendered, appStatus =', appStatus, 'isAuthenticated =', isAuthenticated);
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!isAuthenticated ? (
+      {(appStatus === 'loading' || appStatus === 'idle') ? (
+        <Stack.Screen name="Splash" component={SplashScreen} />
+      ) : !isAuthenticated ? (
         <Stack.Screen name="Auth" component={AuthNavigator} />
       ) : (
         <Stack.Screen name="MainApp" component={AppNavigator} />

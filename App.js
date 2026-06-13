@@ -9,6 +9,7 @@ import { COLORS } from './src/theme/colors';
 import RootNavigator from './src/navigation/RootNavigator';
 
 export default function App() {
+  console.log('[APP] rendering');
   return (
     <Provider store={store}>
       <SafeAreaView style={styles.container}>

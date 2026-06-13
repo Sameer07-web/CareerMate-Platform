@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
-import { SPACING, BORDER_RADIUS } from '../../theme/spacing';
+import { SPACING, BORDER_RADIUS } from '../../theme';
 import { TYPOGRAPHY } from '../../theme/typography';
 import { userStore } from '../../store/userStore';
 import PrimaryButton from '../../components/PrimaryButton';

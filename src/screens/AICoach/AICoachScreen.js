@@ -1,47 +1,50 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useDispatch, useSelector } from 'react-redux';
+import { startNewSession, fetchMessages, sendMessage, optimisticAddMessage } from '../../store/aiSlice';
 import { COLORS } from '../../theme/colors';
-import { SPACING, BORDER_RADIUS } from '../../theme/spacing';
+import { SPACING, BORDER_RADIUS } from '../../theme';
 import { TYPOGRAPHY } from '../../theme/typography';
-import { aiCoachService } from '../../services/aiCoachService';
 import LoadingState from '../../components/LoadingState';
 import SectionHeader from '../../components/SectionHeader';
 import PrimaryButton from '../../components/PrimaryButton';
 
 const AICoachScreen = () => {
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const { currentSessionId, messages, messagesStatus, sessionsStatus, isSending, error } = useSelector((state) => state.ai);
+
   const [inputText, setInputText] = useState('');
   const [showRoadmapSelector, setShowRoadmapSelector] = useState(false);
   const scrollViewRef = useRef(null);
 
   useEffect(() => {
-    loadChat();
-  }, []);
-
-  const loadChat = async () => {
-    const history = await aiCoachService.getChatHistory();
-    setMessages(history);
-    setLoading(false);
-  };
-
-  const addMessage = (sender, text) => {
-    const msg = { id: Date.now().toString(), sender, text };
-    setMessages(prev => [...prev, msg]);
-  };
+    // If we don't have a session and aren't already creating one, start one
+    if (!currentSessionId && sessionsStatus !== 'loading') {
+      dispatch(startNewSession({ sessionType: 'career', firstMessage: 'Hello, I am ready to start my career coaching.' }));
+    } else if (currentSessionId) {
+      // If we have a session but no messages loaded yet, fetch them
+      if (messagesStatus === 'idle') {
+        dispatch(fetchMessages(currentSessionId));
+      }
+    }
+  }, [dispatch, currentSessionId, messagesStatus, sessionsStatus]);
 
   const handleSend = async (customText = null) => {
     const textToSend = customText || inputText;
-    if (!textToSend.trim()) return;
+    if (!textToSend.trim() || !currentSessionId) return;
 
-    addMessage('user', textToSend);
+    // Optimistically add user message to UI
+    dispatch(optimisticAddMessage({
+      _id: Date.now().toString(),
+      sender: 'user',
+      content: textToSend
+    }));
+
     if (!customText) setInputText('');
 
-    // Simulate AI thinking
-    setTimeout(() => {
-      addMessage('ai', 'This is a personalized mock response regarding: ' + textToSend);
-    }, 1200);
+    // Dispatch real API call
+    dispatch(sendMessage({ sessionId: currentSessionId, content: textToSend }));
   };
 
   const handleSuggestion = (text) => {
@@ -54,35 +57,11 @@ const AICoachScreen = () => {
 
   const generateRoadmap = (role) => {
     setShowRoadmapSelector(false);
-    addMessage('user', `Generate a Placement Roadmap for ${role}`);
-
-    setTimeout(() => {
-      const roadmapText = `Here is your customized Placement Roadmap for ${role}:
-
-Week 1
-Java OOP
-
-Week 2
-Collections Framework
-
-Week 3
-Spring Boot Fundamentals
-
-Week 4
-REST APIs
-
-Week 5
-React Fundamentals
-
-Week 6
-Build Portfolio Project
-
-Would you like me to expand on any of these weeks?`;
-      addMessage('ai', roadmapText);
-    }, 1500);
+    handleSend(`Generate a Placement Roadmap for ${role}`);
   };
 
-  if (loading) {
+  // The screen is loading if we are fetching the initial session or messages
+  if (messagesStatus === 'loading' && messages.length === 0) {
     return <LoadingState message="Connecting to AI Coach..." />;
   }
 
@@ -104,17 +83,29 @@ Would you like me to expand on any of these weeks?`;
       >
         {messages.map((msg) => (
           <View
-            key={msg.id}
+            key={msg._id || msg.id}
             style={[
               styles.messageBubble,
               msg.sender === 'user' ? styles.userBubble : styles.aiBubble
             ]}
           >
             <Text style={[styles.messageText, msg.sender === 'user' && styles.userText]}>
-              {msg.text}
+              {msg.content}
             </Text>
           </View>
         ))}
+
+        {isSending && (
+          <View style={[styles.messageBubble, styles.aiBubble]}>
+             <ActivityIndicator size="small" color={COLORS.primary} />
+          </View>
+        )}
+
+        {error && (
+          <View style={styles.errorContainer}>
+             <Text style={styles.errorText}>Failed to send message: {error}</Text>
+          </View>
+        )}
 
         {showRoadmapSelector && (
           <View style={styles.roadmapSelector}>
@@ -168,8 +159,13 @@ Would you like me to expand on any of these weeks?`;
           value={inputText}
           onChangeText={setInputText}
           multiline
+          editable={!isSending}
         />
-        <TouchableOpacity style={styles.sendButton} onPress={() => handleSend()}>
+        <TouchableOpacity 
+          style={[styles.sendButton, isSending && { opacity: 0.5 }]} 
+          onPress={() => handleSend()}
+          disabled={isSending}
+        >
           <Ionicons name="send" size={20} color={COLORS.textPrimary} />
         </TouchableOpacity>
       </View>
@@ -216,6 +212,17 @@ const styles = StyleSheet.create({
   },
   userText: {
     color: '#FFF',
+  },
+  errorContainer: {
+    alignSelf: 'center',
+    marginVertical: SPACING.sm,
+    padding: SPACING.sm,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  errorText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.error,
   },
   suggestionsContainer: {
     paddingHorizontal: SPACING.lg,

@@ -16,7 +16,7 @@ const loginSchema = yup.object({
 
 export default function LoginScreen({ navigation }) {
   const dispatch = useDispatch();
-  const { status, error } = useSelector((state) => state.auth);
+  const { authStatus, error } = useSelector((state) => state.auth);
 
   const { control, handleSubmit } = useForm({
     resolver: yupResolver(loginSchema),
@@ -60,7 +60,7 @@ export default function LoginScreen({ navigation }) {
         <PrimaryButton 
           title="Sign In" 
           onPress={handleSubmit(onSubmit)} 
-          loading={status === 'loading'}
+          loading={authStatus === 'loading'}
           style={styles.loginButton}
         />
       </View>

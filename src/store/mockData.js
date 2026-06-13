@@ -1,8 +1,8 @@
 export const MOCK_USER = {
   id: 'usr_123',
-  firstName: 'Mohammad',
-  lastName: 'Sameer',
-  email: 'sameer.kumar@example.com',
+  firstName: 'Test',
+  lastName: 'User',
+  email: 'test@test.com',
   college: 'SNIST',
   degree: 'B.Tech',
   branch: 'Computer Science',
@@ -97,9 +97,3 @@ export const MOCK_INTERVIEW_DATA = {
     ]
   }
 };
-
-export const MOCK_AI_CHAT = [
-  { id: '1', sender: 'ai', text: 'Hello Mohammad! I am your AI Career Coach. How can I help you today?' },
-  { id: '2', sender: 'user', text: 'Can you review my resume and suggest improvements?' },
-  { id: '3', sender: 'ai', text: 'Sure! I notice your resume lacks keywords like "Docker" and "AWS". Adding a brief summary statement highlighting your full-stack experience would also boost your ATS score.' }
-];

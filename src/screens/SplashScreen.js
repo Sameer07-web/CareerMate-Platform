@@ -7,19 +7,35 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function SplashScreen() {
   const dispatch = useDispatch();
+  console.log('[SPLASH] mounted');
 
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId;
+
     const initAuth = async () => {
+      console.log('[SPLASH] initAuth timeout started');
       // Small delay for branding effect
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
+        if (!isMounted) return;
+        console.log('[SPLASH] timeout finished, dispatching fetchProfile');
         dispatch(fetchProfile()).unwrap().catch(() => {
           // If fetchProfile fails, we dispatch logout to ensure token is cleared
-          dispatch(logoutUser());
+          if (isMounted) {
+            dispatch(logoutUser());
+          }
         });
       }, 1500);
     };
 
     initAuth();
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [dispatch]);
 
   return (

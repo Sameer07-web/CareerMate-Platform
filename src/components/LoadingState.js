@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { COLORS } from '../theme/colors';
-import { SPACING, BORDER_RADIUS } from '../theme/spacing';
+import { SPACING, BORDER_RADIUS } from '../theme';
 
 const ShimmerBlock = ({ width, height, borderRadius = BORDER_RADIUS.sm, style }) => {
   const animatedValue = useRef(new Animated.Value(0)).current;

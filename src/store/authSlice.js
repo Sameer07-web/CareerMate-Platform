@@ -36,14 +36,22 @@ export const registerUser = createAsyncThunk(
 export const fetchProfile = createAsyncThunk(
   'auth/fetchProfile',
   async (_, { dispatch, rejectWithValue }) => {
+    console.log('[AUTH] fetchProfile started');
     try {
       const token = await storage.getToken();
-      if (!token) return rejectWithValue('No token');
+      console.log('[AUTH] token from storage =', token);
+      if (!token) {
+        console.log('[AUTH] fetchProfile failed: No token');
+        return rejectWithValue('No token');
+      }
       
+      console.log('[AUTH] Calling authApi.getProfile()');
       const response = await authApi.getProfile();
+      console.log('[AUTH] authApi.getProfile() success');
       dispatch(setProfile(response.data.data));
       return { token };
     } catch (error) {
+      console.log('[AUTH] fetchProfile error:', error);
       await storage.removeToken();
       return rejectWithValue('Session expired');
     }
@@ -63,7 +71,8 @@ export const logoutUser = createAsyncThunk(
 const initialState = {
   token: null,
   isAuthenticated: false,
-  status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+  appStatus: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+  authStatus: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
   error: null,
 };
 
@@ -78,45 +87,48 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     // Login
     builder.addCase(loginUser.pending, (state) => {
-      state.status = 'loading';
+      state.authStatus = 'loading';
       state.error = null;
     });
     builder.addCase(loginUser.fulfilled, (state, action) => {
-      state.status = 'succeeded';
+      state.authStatus = 'succeeded';
+      state.appStatus = 'succeeded'; // Optional, but usually good to sync
       state.token = action.payload.token;
       state.isAuthenticated = true;
     });
     builder.addCase(loginUser.rejected, (state, action) => {
-      state.status = 'failed';
+      state.authStatus = 'failed';
       state.error = action.payload;
     });
 
     // Register
     builder.addCase(registerUser.pending, (state) => {
-      state.status = 'loading';
+      state.authStatus = 'loading';
       state.error = null;
     });
     builder.addCase(registerUser.fulfilled, (state, action) => {
-      state.status = 'succeeded';
+      state.authStatus = 'succeeded';
+      state.appStatus = 'succeeded';
       state.token = action.payload.token;
       state.isAuthenticated = true;
     });
     builder.addCase(registerUser.rejected, (state, action) => {
-      state.status = 'failed';
+      state.authStatus = 'failed';
       state.error = action.payload;
     });
 
     // Fetch Profile
     builder.addCase(fetchProfile.pending, (state) => {
-      state.status = 'loading';
+      state.appStatus = 'loading';
     });
     builder.addCase(fetchProfile.fulfilled, (state, action) => {
-      state.status = 'succeeded';
+      state.appStatus = 'succeeded';
+      state.authStatus = 'succeeded';
       state.token = action.payload.token;
       state.isAuthenticated = true;
     });
     builder.addCase(fetchProfile.rejected, (state, action) => {
-      state.status = 'failed';
+      state.appStatus = 'failed';
       state.isAuthenticated = false;
       state.token = null;
     });
@@ -125,7 +137,7 @@ const authSlice = createSlice({
     builder.addCase(logoutUser.fulfilled, (state) => {
       state.token = null;
       state.isAuthenticated = false;
-      state.status = 'idle';
+      state.authStatus = 'idle';
     });
   }
 });

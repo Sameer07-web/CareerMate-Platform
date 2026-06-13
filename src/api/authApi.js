@@ -1,6 +1,9 @@
 import api from './axios';
+import { mockAuthApi } from './mockAuthApi';
 
-export const authApi = {
+const USE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK_AUTH === 'true';
+
+const realAuthApi = {
   login: async (credentials) => {
     return api.post('/auth/login', credentials);
   },
@@ -14,8 +17,8 @@ export const authApi = {
   },
 
   logout: async () => {
-    // If backend had token blacklisting, we'd call it here
-    // return api.post('/auth/logout');
     return Promise.resolve();
   }
 };
+
+export const authApi = USE_MOCK ? mockAuthApi : realAuthApi;

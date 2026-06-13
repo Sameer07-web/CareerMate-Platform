@@ -20,7 +20,7 @@ const signupSchema = yup.object({
 
 export default function SignupScreen({ navigation }) {
   const dispatch = useDispatch();
-  const { status, error } = useSelector((state) => state.auth);
+  const { authStatus, error } = useSelector((state) => state.auth);
 
   const { control, handleSubmit } = useForm({
     resolver: yupResolver(signupSchema),
@@ -83,7 +83,7 @@ export default function SignupScreen({ navigation }) {
           <PrimaryButton 
             title="Sign Up" 
             onPress={handleSubmit(onSubmit)} 
-            loading={status === 'loading'}
+            loading={authStatus === 'loading'}
             style={styles.signupButton}
           />
         </View>

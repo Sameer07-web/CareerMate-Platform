@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { COLORS } from '../../theme/colors';
-import { SPACING, BORDER_RADIUS } from '../../theme/spacing';
+import { SPACING, BORDER_RADIUS } from '../../theme';
 import { TYPOGRAPHY } from '../../theme/typography';
 import { interviewService } from '../../services/interviewService';
 import SectionHeader from '../../components/SectionHeader';

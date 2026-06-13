@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { COLORS } from '../theme/colors';
-import { SPACING, BORDER_RADIUS } from '../theme/spacing';
+import { SPACING, BORDER_RADIUS } from '../theme';
 import { TYPOGRAPHY } from '../theme/typography';
 
 const PrimaryButton = ({
