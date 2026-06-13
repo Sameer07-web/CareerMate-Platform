@@ -5,7 +5,8 @@ import { COLORS } from '../../theme/colors';
 import { SPACING, BORDER_RADIUS } from '../../theme';
 import { TYPOGRAPHY } from '../../theme/typography';
 import { appStore } from '../../store/appStore';
-import { authService } from '../../services/authService';
+import { useDispatch } from 'react-redux';
+import { logoutUser } from '../../store/authSlice';
 import SectionHeader from '../../components/SectionHeader';
 
 const SettingsScreen = ({ navigation }) => {
@@ -25,9 +26,10 @@ const SettingsScreen = ({ navigation }) => {
     appStore.updateSetting(key, newValue);
   };
 
+  const dispatch = useDispatch();
+
   const handleLogout = async () => {
-    await authService.logout();
-    navigation.replace('Login');
+    dispatch(logoutUser());
   };
 
   const renderSettingRow = (title, icon, isSwitch, switchKey) => (
